@@ -100,60 +100,47 @@ int f_Matrix_multiply_scalar(f_Matrix_t* m,double s){
 	}
 	return 0;
 }
-f_Matrix_t* f_Matrix_add(f_Matrix_t* pm1,f_Matrix_t* pm2){
+int f_Matrix_add(f_Matrix_t* pm1,f_Matrix_t* pm2,f_Matrix_t* out){
 	f_Matrix_t m1 = *pm1;
 	f_Matrix_t m2 = *pm2;
 	if ((m1.h == m2.h) & (m2.w==m1.w)){
-	f_Matrix_t* out = f_Matrix_constructor(m2.w,m2.h);
 	for (unsigned int k = 0; k<m1.w;k++) {
 		for (unsigned int m = 0; m<m1.h;m++) {
 			f_Matrix_set(out,k,m,f_Matrix_get(pm1,k,m)+f_Matrix_get(pm2,k,m));
 		}
 	}
-	return out;
-	}
-	else{
-	return f_Matrix_constructor(0,0);
+	return 0;
 	}
 }
 
-f_Matrix_t* f_Matrix_sub(f_Matrix_t* pm1,f_Matrix_t* pm2){
+int f_Matrix_sub(f_Matrix_t* pm1,f_Matrix_t* pm2,f_Matrix_t* out){
 	f_Matrix_t m1 = *pm1;
 	f_Matrix_t m2 = *pm2;
 	if ((m1.h == m2.h) & (m2.w==m1.w)){
-	f_Matrix_t* out = f_Matrix_constructor(m2.w,m2.h);
 	for (unsigned int k = 0; k<m1.w;k++) {
 		for (unsigned int m = 0; m<m1.h;m++) {
 			f_Matrix_set(out,k,m,f_Matrix_get(pm1,k,m)-f_Matrix_get(pm2,k,m));
 		}
 	}
-	return out;
-	}
-	else{
-	return f_Matrix_constructor(0,0);
+	return 0;
 	}
 }
-f_Matrix_t* f_Matrix_sign_squared(f_Matrix_t* pm1){
+int f_Matrix_sign_squared(f_Matrix_t* pm1,f_Matrix_t* out){
 	f_Matrix_t m1 = *pm1;
 	int val;
 	for (unsigned int k = 0; k<m1.w;k++) {
 		for (unsigned int m = 0; m<m1.h;m++) {
 			val = f_Matrix_get(pm1,k,m);
-			if(val>=0){
-				f_Matrix_set(pm1,k,m,val*val);
-			}
-			else{
-				f_Matrix_set(pm1,k,m,val*-val);
-			}
+			f_Matrix_set(out,k,m,val*val);
 		}
 	}
-	return pm1;
+	return 0;
 }
 int f_Matrix_print(f_Matrix_t* matrix){
 	printf("(");
 	for(int i=0;i<(*matrix).h;i++){
 		for(int y=0;y<(*matrix).w;y++){
-			printf(" %.2f ,",f_Matrix_get(matrix,y,i));
+			printf("%.4f  ",f_Matrix_get(matrix,y,i));
 		}
 		printf("\n");
 	}

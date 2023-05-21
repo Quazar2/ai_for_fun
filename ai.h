@@ -17,7 +17,7 @@ void feed_forward(AI_t* ai,f_Matrix_t* input){
 		nodes[0]=input;
 		for (int i=0;i<(*ai).layers-1;i++) {
 			f_Matrix_multiply(nodes[i],(*ai).weights[i],nodes[i+1]);
-			f_Matrix_add(nodes[i+1],ai->biases[i]);
+			f_Matrix_add(nodes[i+1],ai->biases[i],nodes[i+1]);
 			f_Matrix_ceil_positive(nodes[i+1]);
 		}
 	}else {
@@ -27,28 +27,18 @@ void feed_forward(AI_t* ai,f_Matrix_t* input){
 
 int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 	feed_forward(ai,input);
-	f_Matrix_t** expected = (f_Matrix_t**)malloc((*ai).layers*sizeof(f_Matrix_t*));
-	f_Matrix_t** correction = (f_Matrix_t**)malloc(((*ai).layers-1)*sizeof(f_Matrix_t*));
-	f_Matrix_t* corrected_weights;
-	for(int i=0;i<(*ai).layers-1;i++){
-		correction[i] = f_Matrix_constructor((*ai).layers_layout[i+1],(*ai).layers_layout[i]);
+	int Error = 0;
+	f_Matrix_t* Local_Errors = f_Matrix_constructor(ai->layers_layout[ai->layers-1],1);
+	f_Matrix_sign_squared(ai->nodes[ai->layers-1],Local_Errors);
+	for(int i = 0;i<ai->layers_layout[ai->layers-1]-1;i++){
+		Error+=f_Matrix_get(Local_Errors,i,0);
 	}
-	expected[(*ai).layers-1]=expectation;
-	for (int i = (*ai).layers-2;i>0;i--) {
-		f_Matrix_t* Error = f_Matrix_sub(expected[i+1],nodes[i+1]);
-		f_Matrix_multiply(f_Matrix_rotate_right(nodes[i]),f_Matrix_sign_squared(Error),correction[i+1]);
-		f_Matrix_destructor(Error);
-		f_Matrix_rotate_left(nodes[i]);
-		corrected_weights = f_Matrix_add((*ai).weights[i+1],correction[i+1]);
-		f_Matrix_destructor((*ai).weights[i+1]);
-		(*ai).weights[i+1] = corrected_weights;
-		for(int j =0;j<(*ai).layers_layout[i+1];j++){
-			for(int k =0;k<(*ai).layers_layout[i];k++){
-				f_Matrix_set(expected[i],k,0,f_Matrix_get(expected[i],k,0)+(f_Matrix_get(expected[i+1],j,0)*f_Matrix_get(corrected_weights,j,k)));
-			}
+	double Partial_derivative_to_error = 0;
+	for (int i = ai->layers-1;i>0;i++) {
+		for (int y = 0;y<ai->layers_layout[i];i++) {
+			//UNDER CONSTRUCTION
 		}
 	}
-	return 0;
 }
 
 f_Matrix_t** create_weights(int* layers_layout,int layers){
@@ -74,7 +64,6 @@ f_Matrix_t** create_biases(int* layers_layout,int layers){
 	return biases;
 }
 f_Matrix_t** create_nodes(int* layers_layout,int layers){
-	srand(time(NULL));
 	f_Matrix_t** nodes =(f_Matrix_t**) malloc((layers)*sizeof(f_Matrix_t));
 	for(int i = 0;i<layers;i++){
 		nodes[i] = f_Matrix_constructor(layers_layout[i],1);
