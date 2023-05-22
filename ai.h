@@ -3,6 +3,12 @@
 #include <time.h>
 #include "Matrix.h"
 
+#ifndef LEARNING_RATE
+#define LEARNING_RATE 0.0001f
+#endif
+
+
+
 typedef struct AI{
 	int* layers_layout;
 	int layers;
@@ -10,6 +16,10 @@ typedef struct AI{
 	f_Matrix_t** biases;
 	f_Matrix_t** nodes;
 } AI_t;
+
+AI_t* create_ai(int* layers_layout,int layers);
+int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation);
+void feed_forward(AI_t* ai,f_Matrix_t* input);
 
 void feed_forward(AI_t* ai,f_Matrix_t* input){
 	if ((*input).w==(*ai).layers_layout[0]) {
@@ -26,17 +36,24 @@ void feed_forward(AI_t* ai,f_Matrix_t* input){
 }
 
 int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
+	AI_t* gradients = create_ai(ai->layers_layout,ai->layers);
 	feed_forward(ai,input);
-	int Error = 0;
-	f_Matrix_t* Local_Errors = f_Matrix_constructor(ai->layers_layout[ai->layers-1],1);
-	f_Matrix_sign_squared(ai->nodes[ai->layers-1],Local_Errors);
+	double Error = 0;
+	f_Matrix_t* Local_Errors = gradients->nodes[gradients->layers-1];
+	f_Matrix_sub(ai->nodes[ai->layers-1],expectation,Local_Errors);
+	f_Matrix_sign_squared(Local_Errors,Local_Errors);
 	for(int i = 0;i<ai->layers_layout[ai->layers-1]-1;i++){
-		Error+=f_Matrix_get(Local_Errors,i,0);
+		Error += f_Matrix_get(Local_Errors,i,0)/ai->layers_layout[ai->layers-1];
 	}
-	double Partial_derivative_to_error = 0;
-	for (int i = ai->layers-1;i>0;i++) {
-		for (int y = 0;y<ai->layers_layout[i];i++) {
-			//UNDER CONSTRUCTION
+	for (int i = ai->layers-1;i>=0;i--) {
+		for (int y = 0;y<ai->layers_layout[i-1];y++) {
+			for(int j =0;j<ai->layers_layout[i];j++){
+				f_Matrix_set(gradients->weights[i-1],j,y,f_Matrix_get(ai->nodes[i-1],y,0)*f_Matrix_get(gradients->nodes[i],j,0));
+				f_Matrix_set(gradients->nodes[i-1],y,j,f_Matrix_get(ai->weights[i-1],j,y)*f_Matrix_get(gradients->nodes[i],j,0));
+				f_Matrix_set(gradients->biases[i],j,0,f_Matrix_get(gradients->nodes[i],j,0));
+				f_Matrix_set(ai->weights[i-1],j,y,f_Matrix_get(ai->weights[i-1],j,y)-f_Matrix_get(gradients->weights[i-1],j,y)*LEARNING_RATE);
+				f_Matrix_set(ai->biases[i],j,y,f_Matrix_get(ai->biases[i],j,y)-f_Matrix_get(gradients->biases[i],j,0)*LEARNING_RATE);
+			}
 		}
 	}
 }
