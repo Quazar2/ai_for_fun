@@ -56,6 +56,8 @@ int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 			}
 		}
 	}
+	destroy_ai(gradients);
+	return 0;
 }
 
 f_Matrix_t** create_weights(int* layers_layout,int layers){
