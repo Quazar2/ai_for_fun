@@ -20,6 +20,7 @@ typedef struct AI{
 AI_t* create_ai(int* layers_layout,int layers);
 int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation);
 void feed_forward(AI_t* ai,f_Matrix_t* input);
+int destroy_ai(AI_t* ai);
 
 void feed_forward(AI_t* ai,f_Matrix_t* input){
 	if ((*input).w==(*ai).layers_layout[0]) {
@@ -28,35 +29,41 @@ void feed_forward(AI_t* ai,f_Matrix_t* input){
 		for (int i=0;i<(*ai).layers-1;i++) {
 			f_Matrix_multiply(nodes[i],(*ai).weights[i],nodes[i+1]);
 			f_Matrix_add(nodes[i+1],ai->biases[i],nodes[i+1]);
-			f_Matrix_ceil_positive(nodes[i+1]);
+			f_Matrix_leaky_relu(nodes[i+1]);
 		}
 	}else {
 		printf("Error : Size of input inequal to input_size of the ai!");
 	}
 }
 
+double compute_Error(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
+	feed_forward(ai,input);
+	double Error;
+	f_Matrix_t* Local_Error = f_Matrix_constructor(ai->layers_layout[ai->layers-1],1);
+	f_Matrix_sub(ai->nodes[ai->layers-1],expectation,Local_Error);
+	f_Matrix_sign_squared(Local_Error,Local_Error);
+	for (int i=0;i<ai->layers_layout[ai->layers-1];i++) {
+		Error+=f_Matrix_get(Local_Error,i,0);
+	}
+}
+
 int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 	AI_t* gradients = create_ai(ai->layers_layout,ai->layers);
 	feed_forward(ai,input);
-	double Error = 0;
-	f_Matrix_t* Local_Errors = gradients->nodes[gradients->layers-1];
-	f_Matrix_sub(ai->nodes[ai->layers-1],expectation,Local_Errors);
-	f_Matrix_sign_squared(Local_Errors,Local_Errors);
-	for(int i = 0;i<ai->layers_layout[ai->layers-1]-1;i++){
-		Error += f_Matrix_get(Local_Errors,i,0)/ai->layers_layout[ai->layers-1];
-	}
-	for (int i = ai->layers-1;i>=0;i--) {
+	f_Matrix_sub(ai->nodes[ai->layers-1],expectation,gradients->nodes[gradients->layers-1]);
+	f_Matrix_multiply_scalar(gradients->nodes[gradients->layers-1],2);
+	for (int i = ai->layers-1;i>0;i--) {
 		for (int y = 0;y<ai->layers_layout[i-1];y++) {
 			for(int j =0;j<ai->layers_layout[i];j++){
 				f_Matrix_set(gradients->weights[i-1],j,y,f_Matrix_get(ai->nodes[i-1],y,0)*f_Matrix_get(gradients->nodes[i],j,0));
-				f_Matrix_set(gradients->nodes[i-1],y,j,f_Matrix_get(ai->weights[i-1],j,y)*f_Matrix_get(gradients->nodes[i],j,0));
-				f_Matrix_set(gradients->biases[i],j,0,f_Matrix_get(gradients->nodes[i],j,0));
+				f_Matrix_set(gradients->nodes[i-1],y,j,f_Matrix_get(ai->weights[i-1],j,y)*leaky_relu_derivative(f_Matrix_get(gradients->nodes[i],j,0)));
+				f_Matrix_set(gradients->biases[i-1],j,0,f_Matrix_get(gradients->nodes[i],j,0));
 				f_Matrix_set(ai->weights[i-1],j,y,f_Matrix_get(ai->weights[i-1],j,y)-f_Matrix_get(gradients->weights[i-1],j,y)*LEARNING_RATE);
-				f_Matrix_set(ai->biases[i],j,y,f_Matrix_get(ai->biases[i],j,y)-f_Matrix_get(gradients->biases[i],j,0)*LEARNING_RATE);
+				f_Matrix_set(ai->biases[i-1],j,y,f_Matrix_get(ai->biases[i-1],j,y)-f_Matrix_get(gradients->biases[i-1],j,0)*LEARNING_RATE);
 			}
 		}
 	}
-	destroy_ai(gradients);
+	//destroy_ai(gradients);
 	return 0;
 }
 
@@ -103,7 +110,7 @@ AI_t* create_ai(int* layers_layout,int layers){
 }
 
 int destroy_ai(AI_t* ai){
-	for(int i = 0;i<(*ai).layers-1;i++){
+	for(int i = 0;i<ai->layers-1;i++){
 		f_Matrix_destructor(ai->weights[i]);
 		f_Matrix_destructor(ai->biases[i]);
 	}

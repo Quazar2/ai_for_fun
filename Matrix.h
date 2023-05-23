@@ -79,15 +79,28 @@ f_Matrix_t* f_Matrix_rotate_left(f_Matrix_t* pm1){
 	}
 }
 
-int f_Matrix_ceil_positive(f_Matrix_t* matrix){
+int f_Matrix_leaky_relu(f_Matrix_t* matrix){
+	float f;
 	for (int i =0;i<(*matrix).h;i++) {
 		for (int y=0;y<(*matrix).w;y++) {
-			if (f_Matrix_get(matrix,y,i)<0) {
-				f_Matrix_set(matrix,y,i,0);
+			f =f_Matrix_get(matrix,y,i);
+			if (f<0) {
+				f_Matrix_set(matrix,y,i,f*0.001);
+			}else{
+				f_Matrix_set(matrix,y,i,f);
 			}
 		}
 	}
 	return 0;
+}
+
+float leaky_relu_derivative(float f){
+	if (f>0) {
+		return f;
+	}
+	else{
+		return 0.001f;
+	}
 }
 
 int f_Matrix_multiply_scalar(f_Matrix_t* m,double s){
