@@ -11,9 +11,9 @@ unsigned int h;
 
 f_Matrix_t *f_Matrix_constructor(int width,int height){
 	f_Matrix_t *Matrix = (f_Matrix_t*)malloc(sizeof(f_Matrix_t));
-	(*Matrix).w = width;
-	(*Matrix).h = height;
-	(*Matrix).ptr = (float *)malloc(width*height*sizeof(float));
+	Matrix->w = width;
+	Matrix->h = height;
+	Matrix->ptr = (float *)calloc(width*height,sizeof(float));
 	return Matrix;
 }
 int f_Matrix_destructor(f_Matrix_t *Matrix){
@@ -41,6 +41,7 @@ int f_Matrix_multiply(f_Matrix_t *pm1,f_Matrix_t *pm2,f_Matrix_t* out){
 		float f = 0;
 		for (unsigned int k=0; k<m1.h;k++) {
 			for (unsigned int m=0; m<m2.w; m++) {
+				f_Matrix_set(out,m,k,0.f);
 				for (unsigned int l=0;l<m1.w;l++) {
 					f = f_Matrix_get(pm1,l,k)*f_Matrix_get(pm2,m,l);
 			  	f_Matrix_set(out,m,k,f+f_Matrix_get(out,m,k));
@@ -140,7 +141,7 @@ int f_Matrix_sub(f_Matrix_t* pm1,f_Matrix_t* pm2,f_Matrix_t* out){
 }
 int f_Matrix_sign_squared(f_Matrix_t* pm1,f_Matrix_t* out){
 	f_Matrix_t m1 = *pm1;
-	int val;
+	float val;
 	for (unsigned int k = 0; k<m1.w;k++) {
 		for (unsigned int m = 0; m<m1.h;m++) {
 			val = f_Matrix_get(pm1,k,m);

@@ -37,6 +37,7 @@ f_Matrix_t* create_random_square(int s){
 }
 
 int train_with_random_shape(AI_t* ai){
+	srand(time(NULL));
 	f_Matrix_t* shape;
 	f_Matrix_t* expectation;
 	int shape_type;
@@ -85,7 +86,7 @@ int main(int argc,char** argv){
 	f_Matrix_set(outputs[3],1,0,1);
 	for (int i=0;i<times;i++) {
 		for (int y =0;y<4;y++) {
-			printf("%lf",compute_Error(inputs[y],ai,outputs[y]));
+			printf("%lf\n",compute_Error(inputs[y],ai,outputs[y]));
 			AI_Train(inputs[y],ai,outputs[y]);
 		}
 	}
