@@ -6,7 +6,7 @@
 #include <math.h>
 
 int main(int argc,char** argv){
-	//srand(time(NULL));
+	srand(time(NULL));
 	int input[] = {0,1};
 	int output[] = {6,10};
 	AI_t* ai = create_ai(20,2,2,input,output);
@@ -35,7 +35,9 @@ int main(int argc,char** argv){
 	f_Matrix_set(outputs[3],0,0,0);
 	f_Matrix_set(outputs[3],1,0,1);
 	for (int i=0;i<times;i++) {
-			printf("%lf\n",compute_Error(3,inputs[1],ai,outputs[1]));
+			printf("%lf\n\n",compute_Error(3,inputs[1],ai,outputs[1]));
+			print_ai(ai);
+			printf("\n\n");
 			AI_Train(3,inputs[1],ai,outputs[1]);
 	}
 

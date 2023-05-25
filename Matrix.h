@@ -22,7 +22,7 @@ int f_Matrix_destructor(f_Matrix_t *Matrix){
 	return 0;
 }
 float f_Matrix_get(f_Matrix_t *Matrix,int w,int h){
-	return *((*Matrix).ptr+w+h*(*Matrix).w);
+	return *(Matrix->ptr+w+h*Matrix->w);
 }
 int f_Matrix_set(f_Matrix_t *pMatrix,int w,int h,float value){
 	f_Matrix_t Matrix =*pMatrix;

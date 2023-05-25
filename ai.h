@@ -25,17 +25,18 @@ void feed_forward(int times,AI_t* ai,f_Matrix_t* input);
 int destroy_ai(AI_t* ai);
 
 void feed_forward(int times,AI_t* ai,f_Matrix_t* input){
+	for(int i =0;i<ai->n_inputs;i++){
+		f_Matrix_set(ai->nodes,ai->inputs[i],0,f_Matrix_get(input,i,0));
+	}
 	for (int i =0;i<times;++i) {
 	f_Matrix_t* swap = f_Matrix_constructor(ai->node,1);
 	f_Matrix_multiply(ai->nodes,ai->weights,swap);
 	//TODO inserer une fonction d'activation ici si tu en veux une.
-	f_Matrix_destructor(ai->nodes);
 	ai->nodes = swap;
 	}
 }
 
 double compute_Error(int times,f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
-	feed_forward(times,ai,input);
 	double Error = 0;
 	float expect = 0;
 	f_Matrix_t* Local_Error = f_Matrix_constructor(ai->n_outputs,1);
@@ -50,6 +51,13 @@ double compute_Error(int times,f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectatio
 	return Error;
 }
 
+int print_ai(AI_t* ai){
+	f_Matrix_print(ai->nodes);
+	printf("\n\n");
+	f_Matrix_print(ai->weights);
+}
+
+
 int AI_Train(int times,f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 	feed_forward(times,ai,input);
 	float correction;
@@ -57,6 +65,7 @@ int AI_Train(int times,f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 		correction =0.f;
 		for(int y=0;y<ai->node;y++){
 			correction = f_Matrix_get(ai->nodes,y,0)*f_Matrix_get(ai->nodes,ai->outputs[i],0)*(2.f/ai->n_outputs);
+			printf("\n%f\n",correction);
 			//TODO add the activation function's derivative to correction if you want one
 			f_Matrix_set(ai->weights,i,y,f_Matrix_get(ai->weights,i,y)+correction*LEARNING_RATE);
 		}
@@ -68,7 +77,7 @@ f_Matrix_t* create_weights(int node){
 	f_Matrix_t* weights = f_Matrix_constructor(node,node);
 	for(int i=0;i<node;i++){
 		for(int y=0;y<node;y++){
-		f_Matrix_set(weights,i,y,rand()/RAND_MAX);
+		f_Matrix_set(weights,i,y,((double)rand())/RAND_MAX/node);
 		}
 	}
 	return weights;
@@ -76,7 +85,7 @@ f_Matrix_t* create_weights(int node){
 f_Matrix_t* create_biases(int node){
 		f_Matrix_t* biases = f_Matrix_constructor(node*node,1);
 		for(int y =0;y<node*node;y++){
-			f_Matrix_set(biases,y,0,rand()/RAND_MAX);
+			f_Matrix_set(biases,y,0,0.5f);
 		}
 	return biases;
 }
