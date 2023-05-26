@@ -60,16 +60,21 @@ int print_ai(AI_t* ai){
 
 int AI_Train(int times,f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 	feed_forward(times,ai,input);
-	float correction;
+	float* correction = calloc(times*ai->node,sizeof(float));
 	for(int i=0;i<ai->n_outputs;i++){
-		correction =0.f;
 		for(int y=0;y<ai->node;y++){
-			correction = f_Matrix_get(ai->nodes,y,0)*f_Matrix_get(ai->nodes,ai->outputs[i],0)*(2.f/ai->n_outputs);
-			printf("\n%f\n",correction);
-			//TODO add the activation function's derivative to correction if you want one
-			f_Matrix_set(ai->weights,i,y,f_Matrix_get(ai->weights,i,y)+correction*LEARNING_RATE);
+			correction[y] = f_Matrix_get(ai->nodes,y,0)*f_Matrix_get(ai->nodes,ai->outputs[i],0)*(2.f/ai->n_outputs);
+			f_Matrix_set(ai->weights,i,y,f_Matrix_get(ai->weights,i,y)+correction[y]*LEARNING_RATE);
+			}
 		}
-	}
+		for (int i=1;i<times;i++) {
+			for (int j =0;j<ai->node;j++) {
+				for (int k =0;k<ai->node;k++) {
+					correction[j+i*ai->node] = correction[k+(i-1)*ai->node]*f_Matrix_get(ai->weights,k,j);
+					f_Matrix_set(ai->weights,k,j,f_Matrix_get(ai->weights,k,j)+correction*LEARNING_RATE);
+				}
+			}
+		}
 	return 0;
 }
 
