@@ -63,15 +63,15 @@ int AI_Train(int times,f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 	float* correction = calloc(times*ai->node,sizeof(float));
 	for(int i=0;i<ai->n_outputs;i++){
 		for(int y=0;y<ai->node;y++){
-			correction[y] = f_Matrix_get(ai->nodes,y,0)*f_Matrix_get(ai->nodes,ai->outputs[i],0)*(2.f/ai->n_outputs);
-			f_Matrix_set(ai->weights,i,y,f_Matrix_get(ai->weights,i,y)+correction[y]*LEARNING_RATE);
+			correction[y] = f_Matrix_get(ai->nodes,y,0)*(f_Matrix_get(ai->nodes,ai->outputs[i],0)-f_Matrix_get(expectation,i,0))*(2.f/ai->n_outputs);
+			f_Matrix_set(ai->weights,i,y,f_Matrix_get(ai->weights,i,y)-correction[y]*LEARNING_RATE);
 			}
 		}
 		for (int i=1;i<times;i++) {
 			for (int j =0;j<ai->node;j++) {
 				for (int k =0;k<ai->node;k++) {
-					correction[j+i*ai->node] = correction[k+(i-1)*ai->node]*f_Matrix_get(ai->weights,k,j);
-					f_Matrix_set(ai->weights,k,j,f_Matrix_get(ai->weights,k,j)+correction*LEARNING_RATE);
+					correction[j+i*ai->node] = (correction[k+(i-1)*ai->node])*f_Matrix_get(ai->weights,k,j);
+					f_Matrix_set(ai->weights,k,j,f_Matrix_get(ai->weights,k,j)-correction[j+i*ai->node]*LEARNING_RATE);
 				}
 			}
 		}
@@ -82,7 +82,7 @@ f_Matrix_t* create_weights(int node){
 	f_Matrix_t* weights = f_Matrix_constructor(node,node);
 	for(int i=0;i<node;i++){
 		for(int y=0;y<node;y++){
-		f_Matrix_set(weights,i,y,((double)rand())/RAND_MAX/node);
+		f_Matrix_set(weights,i,y,((double)rand())/RAND_MAX/node)*5;
 		}
 	}
 	return weights;
