@@ -1,20 +1,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 #include "Matrix.h"
 
 #ifndef LEARNING_RATE
-#define LEARNING_RATE 0.01f
+#define LEARNING_RATE 0.1f
 #endif
 
+float sigmoid (float v){
+	return (1/(1+exp(-v)));
+}
 
+float sigmoid_derivative(float v){
+	double val = sigmoid(v);
+	return val*(1-val);
+}
 
 typedef struct AI{
 	int* layers_layout;
 	int layers;
 	f_Matrix_t** weights;
-	f_Matrix_t** biases;
 	f_Matrix_t** nodes;
+	f_Matrix_t** d_nodes;
+	float (*activation)(float);
+	float (*activationDerivative)(float);
 } AI_t;
 
 AI_t* create_ai(int* layers_layout,int layers);
@@ -29,11 +39,13 @@ void feed_forward(AI_t* ai,f_Matrix_t* input){
 		}
 		for (int i=0;i<ai->layers-1;i++) {
 			f_Matrix_multiply(ai->nodes[i],ai->weights[i],ai->nodes[i+1]);
-			f_Matrix_add(ai->nodes[i+1],ai->biases[i],ai->nodes[i+1]);
-			f_Matrix_leaky_relu(ai->nodes[i+1]);
+			for(int y=0;y<ai->layers_layout[i+1];y++){
+				f_Matrix_set(ai->d_nodes[i+1],y,0,ai->activationDerivative(f_Matrix_get(ai->nodes[i+1],y,0)));
+			}
+			f_Matrix_func_per_val(ai->nodes[i+1],ai->activation);
 		}
 	}else {
-		printf("Error : Size of input inequal to input_size of the ai!");
+		printf("Error : Size of input inequal to input_size of the ai!\n");
 	}
 }
 
@@ -46,26 +58,30 @@ double compute_Error(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 	for (int i=0;i<ai->layers_layout[ai->layers-1];i++) {
 		Error+=f_Matrix_get(Local_Error,i,0)/ai->layers_layout[ai->layers-1];
 	}
+	f_Matrix_destructor(Local_Error);
 	return Error;
 }
 
 int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 	AI_t* gradients = create_ai(ai->layers_layout,ai->layers);
+	gradients->layers_layout = malloc(gradients->layers*sizeof(int));
+	for(int i =0 ;i<ai->layers;i++){
+		gradients->layers_layout[i] = ai->layers_layout[i];
+	}
 	feed_forward(ai,input);
 	f_Matrix_sub(ai->nodes[ai->layers-1],expectation,gradients->nodes[gradients->layers-1]);
 	f_Matrix_multiply_scalar(gradients->nodes[gradients->layers-1],2.f/gradients->layers_layout[gradients->layers-1]);
 	for (int i = ai->layers-1;i>0;i--) {
-		for (int y = 0;y<ai->layers_layout[i-1];y++) {
-			for(int j =0;j<ai->layers_layout[i];j++){
-				f_Matrix_set(ai->biases[i-1],y,0,f_Matrix_get(ai->biases[i-1],y,0)-f_Matrix_get(gradients->nodes[i],y,0)*LEARNING_RATE);
-				f_Matrix_set(gradients->weights[i-1],j,y,f_Matrix_get(gradients->nodes[i],j,0));
-				f_Matrix_set(gradients->nodes[i-1],y,j,f_Matrix_get(ai->weights[i-1],j,y)*leaky_relu_derivative(f_Matrix_get(gradients->nodes[i],j,0)));
-				f_Matrix_set(ai->weights[i-1],j,y,f_Matrix_get(ai->weights[i-1],j,y)-f_Matrix_get(gradients->weights[i-1],j,y)*LEARNING_RATE);
+		for (int y =0;y<gradients->layers_layout[i];y++){
+			f_Matrix_set(gradients->nodes[i],y,0,f_Matrix_get(gradients->nodes[i],y,0)*f_Matrix_get(ai->d_nodes[i],y,0));
+			for (int z =0;z<gradients->layers_layout[i-1];z++){
+				f_Matrix_set(gradients->nodes[i-1],z,0,f_Matrix_get(gradients->nodes[i-1],z,0)+f_Matrix_get(gradients->nodes[i],y,0)*f_Matrix_get(ai->weights[i-1],y,z));
+				f_Matrix_set(ai->weights[i-1],y,z,f_Matrix_get(ai->weights[i-1],y,z)-f_Matrix_get(gradients->nodes[i],y,0)*f_Matrix_get(ai->nodes[i-1],z,0)*LEARNING_RATE);
 			}
 		}
+
 	}
-	free(gradients);
-	//destroy_ai(gradients);
+	destroy_ai(gradients);
 	return 0;
 }
 
@@ -75,7 +91,7 @@ f_Matrix_t** create_weights(int* layers_layout,int layers){
 		weights[i] = f_Matrix_constructor(layers_layout[i+1],layers_layout[i]);
 		for(int y =0;y<layers_layout[i];y++){
 			for (int j=0;j<layers_layout[i+1];j++) {
-			f_Matrix_set(weights[i],j,y,1.f);
+			f_Matrix_set(weights[i],j,y,(float)rand()/RAND_MAX);
 			}
 		}
 	}
@@ -104,23 +120,25 @@ AI_t* create_ai(int* layers_layout,int layers){
 	(*ai).layers = layers;
 	f_Matrix_t** weights = create_weights(layers_layout,layers);
 	(*ai).weights = weights;
-	f_Matrix_t** biases = create_biases(layers_layout,layers);
-	ai->biases = biases;
 	f_Matrix_t** nodes = create_nodes(layers_layout,layers);
 	ai->nodes = nodes;
+	f_Matrix_t** d_nodes = create_nodes(layers_layout,layers);
+	ai->d_nodes = d_nodes;
+	ai->activation = *sigmoid;
+	ai->activationDerivative = *sigmoid_derivative;
 	return ai;
 }
 
 int destroy_ai(AI_t* ai){
-	for(int i = 0;i<ai->layers-1;i++){
+	for(int i = 0;i<ai->layers-2;i++){
 		f_Matrix_destructor(ai->weights[i]);
-		f_Matrix_destructor(ai->biases[i]);
 	}
-	for (int i=0;i<ai->layers;i++) {
+	for (int i=0;i<ai->layers-1;i++) {
 		f_Matrix_destructor(ai->nodes[i]);
+		f_Matrix_destructor(ai->d_nodes[i]);
 	}
 	free(ai->weights);
-	free(ai->biases);
+	free(ai->d_nodes);
 	free(ai->nodes);
 	free(ai->layers_layout);
 	free(ai);

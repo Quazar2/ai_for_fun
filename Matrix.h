@@ -64,6 +64,7 @@ f_Matrix_t* f_Matrix_rotate_right(f_Matrix_t* pm1){
 	}else {
 		//TODO Finish this
 		printf("Error : Unimplemented");
+		return 0;
 	}
 }
 
@@ -77,32 +78,10 @@ f_Matrix_t* f_Matrix_rotate_left(f_Matrix_t* pm1){
 	}else {
 		//TODO Finish this
 		printf("Error : Unimplemented");
+		return 0;
 	}
 }
 
-int f_Matrix_leaky_relu(f_Matrix_t* matrix){
-	float f;
-	for (int i =0;i<(*matrix).h;i++) {
-		for (int y=0;y<(*matrix).w;y++) {
-			f =f_Matrix_get(matrix,y,i);
-			if (f<0) {
-				f_Matrix_set(matrix,y,i,f*0.001);
-			}else{
-				f_Matrix_set(matrix,y,i,f);
-			}
-		}
-	}
-	return 0;
-}
-
-float leaky_relu_derivative(float f){
-	if (f>0) {
-		return f;
-	}
-	else{
-		return 0.001f;
-	}
-}
 
 int f_Matrix_multiply_scalar(f_Matrix_t* m,double s){
 	int width = (*m).w;
@@ -125,6 +104,7 @@ int f_Matrix_add(f_Matrix_t* pm1,f_Matrix_t* pm2,f_Matrix_t* out){
 	}
 	return 0;
 	}
+	return 1;
 }
 
 int f_Matrix_sub(f_Matrix_t* pm1,f_Matrix_t* pm2,f_Matrix_t* out){
@@ -138,6 +118,7 @@ int f_Matrix_sub(f_Matrix_t* pm1,f_Matrix_t* pm2,f_Matrix_t* out){
 	}
 	return 0;
 	}
+	return 1;
 }
 int f_Matrix_sign_squared(f_Matrix_t* pm1,f_Matrix_t* out){
 	f_Matrix_t m1 = *pm1;
@@ -162,4 +143,9 @@ int f_Matrix_print(f_Matrix_t* matrix){
 	return 0;
 }
 
-
+int f_Matrix_func_per_val(f_Matrix_t* matrix,float (*func)(float)){
+	for(int i = 0;i<matrix->w*matrix->h;i++){
+		*(matrix->ptr+i) = (*func)(*(matrix->ptr+i));
+	}
+	return 0;
+}

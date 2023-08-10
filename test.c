@@ -57,11 +57,13 @@ int train_with_random_shape(AI_t* ai){
 }
 
 int main(int argc,char** argv){
-	//srand(time(NULL));
-	int layout[] = {2,2};
-	AI_t* ai = create_ai(layout,2);
-	int times;
-	scanf("%d",&times);
+	srand(time(NULL));
+	int* layout = malloc(3*sizeof(int));
+	layout[0] = 2;
+	layout[1] = 3;
+	layout[2] = 2;
+	AI_t* ai = create_ai(layout,3);
+	int times = 10000;
 	f_Matrix_t** inputs = malloc(4*sizeof(f_Matrix_t*));
 	f_Matrix_t** outputs = malloc(4*sizeof(f_Matrix_t*));
 	for (int i=0;i<4;i++) {
@@ -84,11 +86,21 @@ int main(int argc,char** argv){
 	f_Matrix_set(outputs[2],1,0,0);
 	f_Matrix_set(outputs[3],0,0,0);
 	f_Matrix_set(outputs[3],1,0,1);
+	double overall_Error;
 	for (int i=0;i<times;i++) {
+		overall_Error =0;
 		for (int y =0;y<4;y++) {
-			printf("%lf\n",compute_Error(inputs[y],ai,outputs[y]));
+			overall_Error+=compute_Error(inputs[y],ai,outputs[y]);
 			AI_Train(inputs[y],ai,outputs[y]);
 		}
+			f_Matrix_print(ai->weights[0]);
+			f_Matrix_print(ai->weights[1]);
+			printf("%.12lf\n",overall_Error/4);
+			printf("\n");
+	}
+	for(int i = 0;i<4;i++){
+		f_Matrix_destructor(inputs[i]);
+		f_Matrix_destructor(outputs[i]);
 	}
 
 	return 0;
