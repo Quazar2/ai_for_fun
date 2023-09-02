@@ -34,9 +34,9 @@ int f_Matrix_set(f_Matrix_t *Matrix,int w,int h,float value){
 	}
 }
 int f_Matrix_multiply(f_Matrix_t *m1,f_Matrix_t *m2,f_Matrix_t* out){
-	if ((m1->w==m2->h)&(out->h==m1.h)&(out->w==m2->w)){
+	if ((m1->w==m2->h)&(out->h==m1->h)&(out->w==m2->w)){
 		float f = 0;
-		for (unsigned int k=0; k<m1.h;k++) {
+		for (unsigned int k=0; k<m1->h;k++) {
 			for (unsigned int m=0; m<m2->w; m++) {
 				f_Matrix_set(out,m,k,0.f);
 				for (unsigned int l=0;l<m1->w;l++) {
@@ -47,9 +47,7 @@ int f_Matrix_multiply(f_Matrix_t *m1,f_Matrix_t *m2,f_Matrix_t* out){
 		}
 		return 0;
 	}
-	else{
 	return 1;
-	}
 }
 
 int f_Matrix_multiply_scalar(f_Matrix_t* m,double s){

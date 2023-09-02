@@ -167,10 +167,10 @@ AI_t* read_ai(const char* n,float (*activation)(float),float (*activation_derriv
 	ai->layers_layout = calloc(ai->layers,sizeof(int));
 	fread(ai->layers_layout,sizeof(int),ai->layers,file);
 	ai->nodes = create_nodes(ai->layers_layout,ai->layers);
-	ai->d_nodes = create_nodes(ai->layers_layout,layers);
+	ai->d_nodes = create_nodes(ai->layers_layout,ai->layers);
 	ai->activation = activation;
 	ai->activationDerivative = activation_derrivative;
-	ai->wieghts = calloc(ai->layers-1,sizeof(f_Matrix_t));
+	ai->weights = calloc(ai->layers-1,sizeof(f_Matrix_t));
 	for(int i =0;i<ai->layers-1;i++){
 		ai->weights[i] = f_Matrix_constructor(ai->layers_layout[i+1],ai->layers_layout[i]);
 		fread(ai->weights[i]->ptr,sizeof(float),ai->layers_layout[i+1]*ai->layers_layout[i],file);
