@@ -8,6 +8,10 @@
 #define LEARNING_RATE 0.1f
 #endif
 
+float squared(float v){
+	return v*v;
+}
+
 float sigmoid (float v){
 	return (1/(1+exp(-v)));
 }
@@ -54,7 +58,7 @@ double compute_Error(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 	double Error = 0;
 	f_Matrix_t* Local_Error = f_Matrix_constructor(ai->layers_layout[ai->layers-1],1);
 	f_Matrix_sub(ai->nodes[ai->layers-1],expectation,Local_Error);
-	f_Matrix_sign_squared(Local_Error,Local_Error);
+	f_Matrix_func_per_val(Local_Error,*squared);
 	for (int i=0;i<ai->layers_layout[ai->layers-1];i++) {
 		Error+=f_Matrix_get(Local_Error,i,0)/ai->layers_layout[ai->layers-1];
 	}
@@ -146,7 +150,6 @@ int destroy_ai(AI_t* ai){
 }
 
 int write_ai(AI_t* ai,const char* n){
-
 	FILE* file = fopen(n,"wb+");
 	fwrite(&(ai->layers),sizeof(int),1,file);
 	fwrite(ai->layers_layout,sizeof(int),ai->layers,file);
@@ -157,12 +160,16 @@ int write_ai(AI_t* ai,const char* n){
 	return 1;
 }
 
-AI_t* read_ai(const char* n){
+AI_t* read_ai(const char* n,float (*activation)(float),float (*activation_derrivative)(float)){
 	AI_t* ai = calloc(1,sizeof(AI_t));
 	FILE* file = fopen(n,"rb");
 	fread(&(ai->layers),sizeof(int),1,file);
 	ai->layers_layout = calloc(ai->layers,sizeof(int));
 	fread(ai->layers_layout,sizeof(int),ai->layers,file);
+	ai->nodes = create_nodes(ai->layers_layout,ai->layers);
+	ai->d_nodes = create_nodes(ai->layers_layout,layers);
+	ai->activation = activation;
+	ai->activationDerivative = activation_derrivative;
 	ai->wieghts = calloc(ai->layers-1,sizeof(f_Matrix_t));
 	for(int i =0;i<ai->layers-1;i++){
 		ai->weights[i] = f_Matrix_constructor(ai->layers_layout[i+1],ai->layers_layout[i]);
