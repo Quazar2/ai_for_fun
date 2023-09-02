@@ -63,7 +63,7 @@ int main(int argc,char** argv){
 	layout[1] = 3;
 	layout[2] = 2;
 	AI_t* ai = create_ai(layout,3);
-	int times = 10000;
+	int times = 10;
 	f_Matrix_t** inputs = malloc(4*sizeof(f_Matrix_t*));
 	f_Matrix_t** outputs = malloc(4*sizeof(f_Matrix_t*));
 	for (int i=0;i<4;i++) {

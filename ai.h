@@ -145,3 +145,29 @@ int destroy_ai(AI_t* ai){
 	return 0;
 }
 
+int write_ai(AI_t* ai,const char* n){
+
+	FILE* file = fopen(n,"wb+");
+	fwrite(&(ai->layers),sizeof(int),1,file);
+	fwrite(ai->layers_layout,sizeof(int),ai->layers,file);
+	for(int i=0;i<ai->layers-1;i++){
+		fwrite(ai->weights[i]->ptr,sizeof(float),ai->layers_layout[i]*ai->layers_layout[i+1],file);
+	}
+	fclose(file);
+	return 1;
+}
+
+AI_t* read_ai(const char* n){
+	AI_t* ai = calloc(1,sizeof(AI_t));
+	FILE* file = fopen(n,"rb");
+	fread(&(ai->layers),sizeof(int),1,file);
+	ai->layers_layout = calloc(ai->layers,sizeof(int));
+	fread(ai->layers_layout,sizeof(int),ai->layers,file);
+	ai->wieghts = calloc(ai->layers-1,sizeof(f_Matrix_t));
+	for(int i =0;i<ai->layers-1;i++){
+		ai->weights[i] = f_Matrix_constructor(ai->layers_layout[i+1],ai->layers_layout[i]);
+		fread(ai->weights[i]->ptr,sizeof(float),ai->layers_layout[i+1]*ai->layers_layout[i],file);
+	}
+	fclose(file);
+	return ai;
+}
