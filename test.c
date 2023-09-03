@@ -62,8 +62,16 @@ int main(int argc,char** argv){
 	layout[0] = 2;
 	layout[1] = 3;
 	layout[2] = 2;
-	AI_t* ai = create_ai(layout,3);
-	int times = 10;
+	printf("Do you want to load your ai.bin (y/n): ");
+	char r;
+	AI_t* ai;
+	scanf(" %c",&r);
+	if(r=='y'){
+		ai = read_ai("ai.bin",*sigmoid,*sigmoid_derivative);
+	}else{
+	ai = create_ai(layout,3);
+	}
+	int times = 2000;
 	f_Matrix_t** inputs = malloc(4*sizeof(f_Matrix_t*));
 	f_Matrix_t** outputs = malloc(4*sizeof(f_Matrix_t*));
 	for (int i=0;i<4;i++) {
@@ -98,10 +106,15 @@ int main(int argc,char** argv){
 			printf("%.12lf\n",overall_Error/4);
 			printf("\n");
 	}
+	printf("Do you want to save your save to ai.bin (y/n): ");
+	scanf(" %c",&r);
+	if(r=='y'){
+		write_ai(ai,"ai.bin");
+	}
 	for(int i = 0;i<4;i++){
 		f_Matrix_destructor(inputs[i]);
 		f_Matrix_destructor(outputs[i]);
 	}
-
+	destroy_ai(ai);
 	return 0;
 }
