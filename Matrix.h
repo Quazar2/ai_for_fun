@@ -175,7 +175,7 @@ int f_Matrix_3_print(f_Matrix_3_t* matrix){
 	printf("[\n");
 	for(int i=0;i<matrix->h;i++){
 		for(int y=0;y<matrix->w;y++){
-			printf("%.4f  ",f_Matrix_3_get(matrix,y,i));
+			printf("%.4f  ",f_Matrix_3_get(matrix,y,i,z));
 		}
 		printf("\n");
 	}

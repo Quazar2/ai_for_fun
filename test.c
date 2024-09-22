@@ -54,6 +54,7 @@ int train_with_random_shape(AI_t* ai){
 	AI_Train(shape,ai,expectation);
 	f_Matrix_destructor(expectation);
 	f_Matrix_destructor(shape);
+	return 0;
 }
 
 int main(int argc,char** argv){
