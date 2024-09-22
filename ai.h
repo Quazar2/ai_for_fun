@@ -134,10 +134,10 @@ AI_t* create_ai(int* layers_layout,int layers){
 }
 
 int destroy_ai(AI_t* ai){
-	for(int i = 0;i<ai->layers-2;i++){
+	for(int i = 0;i<ai->layers-1;i++){
 		f_Matrix_destructor(ai->weights[i]);
 	}
-	for (int i=0;i<ai->layers-1;i++) {
+	for (int i=0;i<ai->layers;i++) {
 		f_Matrix_destructor(ai->nodes[i]);
 		f_Matrix_destructor(ai->d_nodes[i]);
 	}

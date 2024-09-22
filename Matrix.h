@@ -207,5 +207,5 @@ int f_Matrix_func_per_val(f_Matrix_t* matrix,float (*func)(float)){
 	for(int i = 0;i<matrix->w*matrix->h;i++){
 		*(matrix->ptr+i) = (*func)(*(matrix->ptr+i));
 	}
-	return 0;
+        return 0 ;
 }

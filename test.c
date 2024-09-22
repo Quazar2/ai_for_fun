@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <math.h>
 
+#define shape_size 50
 
-f_Matrix_t* create_random_circle(int s){
-	f_Matrix_t* m = f_Matrix_constructor(s*s,1);
+f_Matrix_t* create_random_circle(int s,f_Matrix_t* m){
 	int r = (1 + rand())%(s-2)/2;
 	int x = r + rand()%(s-2*r);
 	int y = r + rand()%(s-2*r);
@@ -21,8 +21,7 @@ f_Matrix_t* create_random_circle(int s){
 	return m;
 }
 
-f_Matrix_t* create_random_square(int s){
-	f_Matrix_t* m = f_Matrix_constructor(s*s,1);
+f_Matrix_t* create_random_square(int s,f_Matrix_t* m){
 	int r = (1 + rand())%(s-2)/2;
 	int x = r + rand()%(s-2*r);
 	int y = r + rand()%(s-2*r);
@@ -36,33 +35,52 @@ f_Matrix_t* create_random_square(int s){
 	return m;
 }
 
-int train_with_random_shape(AI_t* ai){
+double train_with_random_shape(AI_t* ai,unsigned int times,unsigned int shapes){
 	srand(time(NULL));
-	f_Matrix_t* shape;
+	f_Matrix_t** m = malloc(times*sizeof(f_Matrix_t*));
 	f_Matrix_t* expectation;
-	int shape_type;
-	if(rand()%2==0){
-		shape = create_random_circle(100);
-		shape_type=0;
+	int* shape_type= malloc(times*sizeof(int));
+	double error =0;
+	double average_error = 0.;
+	for(int i=0;i<shapes;i++){
+		m[i]=f_Matrix_constructor(shape_size*shape_size,1);
+		if(rand()%2==0){
+			m[i] = create_random_circle(shape_size,m[i]);
+			shape_type[i]=0;
+		}
+		else{
+			m[i] = create_random_square(shape_size,m[i]);
+			shape_type[i]=1;
+		}
 	}
-	else{
-		shape = create_random_square(100);
-		shape_type=1;
+	for(int i=0;i<times;i++){
+		error =0;
+		for(int j=0;j<shapes;j++){
+			expectation = f_Matrix_constructor(2,1);
+			f_Matrix_set(expectation,shape_type[j],0,1);
+			AI_Train(m[j],ai,expectation);
+			error += compute_Error(m[j],ai,expectation);
+			
+			average_error+=error;
+			f_Matrix_destructor(expectation);
+		}
+		printf("%.12lf\n",error);
 	}
-	expectation = f_Matrix_constructor(2,1);
-	f_Matrix_set(expectation,shape_type,0,1);
-	AI_Train(shape,ai,expectation);
-	f_Matrix_destructor(expectation);
-	f_Matrix_destructor(shape);
-	return 0;
+	for(int i=0;i<times;i++){
+		f_Matrix_destructor(m[i]);
+	}
+	free(m);
+	free(shape_type);
+	return average_error/times;
 }
 
 int main(int argc,char** argv){
 	srand(time(NULL));
-	int* layout = malloc(3*sizeof(int));
-	layout[0] = 2;
-	layout[1] = 3;
-	layout[2] = 2;
+	int* layout = malloc(4*sizeof(int));
+	layout[0] = shape_size*shape_size;
+	layout[1] = 15;
+	layout[2] = 10;
+	layout[3] = 2;
 	printf("Do you want to load your ai.bin (y/n): ");
 	char r;
 	AI_t* ai;
@@ -70,9 +88,13 @@ int main(int argc,char** argv){
 	if(r=='y'){
 		ai = read_ai("ai.bin",*sigmoid,*sigmoid_derivative);
 	}else{
-	ai = create_ai(layout,3);
+	ai = create_ai(layout,4);
 	}
-	int times = 2000;
+	int times = 1;
+	for(int i=0;i<times;i++){
+		train_with_random_shape(ai,400,800);
+	}
+	/*
 	f_Matrix_t** inputs = malloc(4*sizeof(f_Matrix_t*));
 	f_Matrix_t** outputs = malloc(4*sizeof(f_Matrix_t*));
 	for (int i=0;i<4;i++) {
@@ -107,15 +129,18 @@ int main(int argc,char** argv){
 			printf("%.12lf\n",overall_Error/4);
 			printf("\n");
 	}
+	*/
 	printf("Do you want to save your save to ai.bin (y/n): ");
 	scanf(" %c",&r);
 	if(r=='y'){
 		write_ai(ai,"ai.bin");
 	}
+	/*
 	for(int i = 0;i<4;i++){
 		f_Matrix_destructor(inputs[i]);
 		f_Matrix_destructor(outputs[i]);
 	}
+	*/
 	destroy_ai(ai);
 	return 0;
 }
