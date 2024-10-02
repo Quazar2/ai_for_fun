@@ -49,7 +49,7 @@ void feed_forward(AI_t* ai,f_Matrix_t* input){
 			f_Matrix_func_per_val(ai->nodes[i+1],ai->activation);
 		}
 	}else {
-		printf("Error : Size of input inequal to input_size of the ai!\n");
+		printf("Error : Size of input inequal to input_size of the ai, %d !\n",input->w);
 	}
 }
 

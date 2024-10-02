@@ -37,9 +37,9 @@ f_Matrix_t* create_random_square(int s,f_Matrix_t* m){
 
 double train_with_random_shape(AI_t* ai,unsigned int times,unsigned int shapes){
 	srand(time(NULL));
-	f_Matrix_t** m = malloc(times*sizeof(f_Matrix_t*));
+	f_Matrix_t** m = malloc(shapes*sizeof(f_Matrix_t*));
 	f_Matrix_t* expectation;
-	int* shape_type= malloc(times*sizeof(int));
+	int* shape_type= malloc(shapes*sizeof(int));
 	double error =0;
 	double average_error = 0.;
 	for(int i=0;i<shapes;i++){
@@ -58,6 +58,7 @@ double train_with_random_shape(AI_t* ai,unsigned int times,unsigned int shapes){
 		for(int j=0;j<shapes;j++){
 			expectation = f_Matrix_constructor(2,1);
 			f_Matrix_set(expectation,shape_type[j],0,1);
+			//printf("\n%d , %d\n",m[j]->w,j);
 			AI_Train(m[j],ai,expectation);
 			error += compute_Error(m[j],ai,expectation);
 			
