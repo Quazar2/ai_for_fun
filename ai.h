@@ -5,7 +5,7 @@
 #include "Matrix.h"
 
 #ifndef LEARNING_RATE
-#define LEARNING_RATE 0.1f
+#define LEARNING_RATE 0.5f
 #endif
 
 float squared(float v){
@@ -19,6 +19,22 @@ float sigmoid (float v){
 float sigmoid_derivative(float v){
 	double val = sigmoid(v);
 	return val*(1-val);
+}
+
+float l_Relu(float v){
+	if(v>0){
+	return v;
+	}else{
+	return 0.1*v;
+	}
+}
+
+float l_Relu_derivative(float v){
+	if(v>0){
+		return 1;
+	}else{
+		return 0.1;
+	}
 }
 
 typedef struct AI{
@@ -54,7 +70,6 @@ void feed_forward(AI_t* ai,f_Matrix_t* input){
 }
 
 double compute_Error(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
-	feed_forward(ai,input);
 	double Error = 0;
 	f_Matrix_t* Local_Error = f_Matrix_constructor(ai->layers_layout[ai->layers-1],1);
 	f_Matrix_sub(ai->nodes[ai->layers-1],expectation,Local_Error);
@@ -95,7 +110,7 @@ f_Matrix_t** create_weights(int* layers_layout,int layers){
 		weights[i] = f_Matrix_constructor(layers_layout[i+1],layers_layout[i]);
 		for(int y =0;y<layers_layout[i];y++){
 			for (int j=0;j<layers_layout[i+1];j++) {
-			f_Matrix_set(weights[i],j,y,(float)rand()/RAND_MAX);
+			f_Matrix_set(weights[i],j,y,0.5/layers_layout[i+1]);
 			}
 		}
 	}
@@ -122,14 +137,14 @@ AI_t* create_ai(int* layers_layout,int layers){
 	AI_t* ai =(AI_t*) malloc(sizeof(AI_t));
 	(*ai).layers_layout = layers_layout;
 	(*ai).layers = layers;
-	f_Matrix_t** weights = create_weights(layers_layout,layers);
+	f_Matrix_t** weights = create_weights(ai->layers_layout,layers);
 	(*ai).weights = weights;
 	f_Matrix_t** nodes = create_nodes(layers_layout,layers);
 	ai->nodes = nodes;
 	f_Matrix_t** d_nodes = create_nodes(layers_layout,layers);
 	ai->d_nodes = d_nodes;
-	ai->activation = *sigmoid;
-	ai->activationDerivative = *sigmoid_derivative;
+	ai->activation = *l_Relu;
+	ai->activationDerivative = *l_Relu_derivative;
 	return ai;
 }
 

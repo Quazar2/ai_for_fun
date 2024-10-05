@@ -1,5 +1,6 @@
 #pragma once
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,6 +16,14 @@ float* ptr;
 unsigned int w;
 unsigned int h;
 } f_Matrix_t;
+
+typedef struct f_mult_arg{
+f_Matrix_t** ptr;
+unsigned int m;
+unsigned int k;
+unsigned int l;
+}f_mult_arg_t;
+
 
 f_Matrix_3_t *f_Matrix_3_constructor(int width,int height,int depth){
 	f_Matrix_3_t *Matrix = malloc(sizeof(f_Matrix_3_t));
@@ -65,18 +74,40 @@ int f_Matrix_set(f_Matrix_t *Matrix,int w,int h,float value){
 	return 1;
 	}
 }
+void* f_Mult_thread(void* ar){
+	f_mult_arg_t* arg = (f_mult_arg_t*)ar;
+	float f;
+	f_Matrix_set(arg->ptr[0],arg->m,arg->k,0.f);
+	for (unsigned int l=0;l<arg->l;l++) {
+		f = f_Matrix_get(arg->ptr[1],l,arg->k)*f_Matrix_get(arg->ptr[2],arg->m,l);
+		f_Matrix_set(arg->ptr[0],arg->m,arg->k,f+f_Matrix_get(arg->ptr[0],arg->m,arg->k));
+	}
+	pthread_exit(NULL);
+}
 int f_Matrix_multiply(f_Matrix_t *m1,f_Matrix_t *m2,f_Matrix_t* out){
 	if ((m1->w==m2->h)&(out->h==m1->h)&(out->w==m2->w)){
-		float f = 0;
+		pthread_t threads[m1->h*m2->w];
+		f_mult_arg_t* args =(f_mult_arg_t*) malloc(m1->h*m2->w*sizeof(f_mult_arg_t));
+		float f =0;
+		f_Matrix_t **ptr =(f_Matrix_t**) malloc(sizeof(f_Matrix_t**));
+		pthread_mutex_t mut;
+		pthread_mutex_init(&mut,NULL);
+		ptr[0]=out;
+		ptr[1]=m1;
+		ptr[2]=m2;
 		for (unsigned int k=0; k<m1->h;k++) {
 			for (unsigned int m=0; m<m2->w; m++) {
-				f_Matrix_set(out,m,k,0.f);
-				for (unsigned int l=0;l<m1->w;l++) {
-					f = f_Matrix_get(m1,l,k)*f_Matrix_get(m2,m,l);
-			  		f_Matrix_set(out,m,k,f+f_Matrix_get(out,m,k));
-				}
+				args[m+k*m2->w].ptr = ptr;
+				args[m+k*m2->w].m = m;
+				args[m+k*m2->w].k = k;
+				args[m+k*m2->w].l = m1->w;
+				pthread_create(&threads[m+k*m2->w],NULL,f_Mult_thread,(void *)&args[m+k*m2->w]);
 			}
 		}
+		for(unsigned int i=0;i<m1->h*m2->w;i++){
+			pthread_join(threads[i],NULL);
+		}
+		pthread_mutex_destroy(&mut);
 		return 0;
 	}
 	return 1;

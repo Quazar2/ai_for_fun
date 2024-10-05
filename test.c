@@ -61,11 +61,9 @@ double train_with_random_shape(AI_t* ai,unsigned int times,unsigned int shapes){
 			//printf("\n%d , %d\n",m[j]->w,j);
 			AI_Train(m[j],ai,expectation);
 			error += compute_Error(m[j],ai,expectation);
-			
-			average_error+=error;
 			f_Matrix_destructor(expectation);
 		}
-		printf("%.12lf\n",error);
+		printf("%.12lf\n",error/shapes);
 	}
 	for(int i=0;i<times;i++){
 		f_Matrix_destructor(m[i]);
@@ -87,13 +85,13 @@ int main(int argc,char** argv){
 	AI_t* ai;
 	scanf(" %c",&r);
 	if(r=='y'){
-		ai = read_ai("ai.bin",*sigmoid,*sigmoid_derivative);
+		ai = read_ai("ai.bin",*l_Relu,*l_Relu_derivative);
 	}else{
 	ai = create_ai(layout,4);
 	}
 	int times = 1;
 	for(int i=0;i<times;i++){
-		train_with_random_shape(ai,400,800);
+		train_with_random_shape(ai,20,8000);
 	}
 	/*
 	f_Matrix_t** inputs = malloc(4*sizeof(f_Matrix_t*));
