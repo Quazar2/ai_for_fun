@@ -76,11 +76,9 @@ int f_Matrix_set(f_Matrix_t *Matrix,int w,int h,float value){
 }
 void* f_Mult_thread(void* ar){
 	f_mult_arg_t* arg = (f_mult_arg_t*)ar;
-	float f;
 	f_Matrix_set(arg->ptr[0],arg->m,arg->k,0.f);
 	for (unsigned int l=0;l<arg->l;l++) {
-		f = f_Matrix_get(arg->ptr[1],l,arg->k)*f_Matrix_get(arg->ptr[2],arg->m,l);
-		f_Matrix_set(arg->ptr[0],arg->m,arg->k,f+f_Matrix_get(arg->ptr[0],arg->m,arg->k));
+		f_Matrix_set(arg->ptr[0],arg->m,arg->k,f_Matrix_get(arg->ptr[1],l,arg->k)*f_Matrix_get(arg->ptr[2],arg->m,l)+f_Matrix_get(arg->ptr[0],arg->m,arg->k));
 	}
 	pthread_exit(NULL);
 }
@@ -90,8 +88,6 @@ int f_Matrix_multiply(f_Matrix_t *m1,f_Matrix_t *m2,f_Matrix_t* out){
 		f_mult_arg_t* args =(f_mult_arg_t*) malloc(m1->h*m2->w*sizeof(f_mult_arg_t));
 		float f =0;
 		f_Matrix_t **ptr =(f_Matrix_t**) malloc(sizeof(f_Matrix_t**));
-		pthread_mutex_t mut;
-		pthread_mutex_init(&mut,NULL);
 		ptr[0]=out;
 		ptr[1]=m1;
 		ptr[2]=m2;
@@ -107,7 +103,8 @@ int f_Matrix_multiply(f_Matrix_t *m1,f_Matrix_t *m2,f_Matrix_t* out){
 		for(unsigned int i=0;i<m1->h*m2->w;i++){
 			pthread_join(threads[i],NULL);
 		}
-		pthread_mutex_destroy(&mut);
+		free(args);
+		free(ptr);
 		return 0;
 	}
 	return 1;

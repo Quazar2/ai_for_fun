@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#define shape_size 50
+#define shape_size 20
 
 f_Matrix_t* create_random_circle(int s,f_Matrix_t* m){
 	int r = (1 + rand())%(s-2)/2;
@@ -65,7 +65,7 @@ double train_with_random_shape(AI_t* ai,unsigned int times,unsigned int shapes){
 		}
 		printf("%.12lf\n",error/shapes);
 	}
-	for(int i=0;i<times;i++){
+	for(int i=0;i<shapes;i++){
 		f_Matrix_destructor(m[i]);
 	}
 	free(m);
@@ -91,7 +91,7 @@ int main(int argc,char** argv){
 	}
 	int times = 1;
 	for(int i=0;i<times;i++){
-		train_with_random_shape(ai,20,8000);
+		train_with_random_shape(ai,10,20);
 	}
 	/*
 	f_Matrix_t** inputs = malloc(4*sizeof(f_Matrix_t*));
