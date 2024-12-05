@@ -47,10 +47,27 @@ typedef struct AI{
 	float (*activationDerivative)(float);
 } AI_t;
 
+typedef struct Dataset{
+	int length;
+	f_Matrix_t** inputs;
+	f_Matrix_t** outputs;
+} Dataset_t;
+
+typedef struct Convolutive_AI{
+	int* layers_layout;
+	int layers;
+	f_Matrix_t** weights;
+	f_Matrix_t** nodes;
+	f_Matrix_t** d_nodes;
+	float (*activation)(float);
+	float (*activationDerivative)(float);
+} Convo_AI_t;
 AI_t* create_ai(int* layers_layout,int layers);
 int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation);
 void feed_forward(AI_t* ai,f_Matrix_t* input);
 int destroy_ai(AI_t* ai);
+
+
 
 void feed_forward(AI_t* ai,f_Matrix_t* input){
 	if (input->w == ai->layers_layout[0]) {
@@ -83,7 +100,7 @@ double compute_Error(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 
 int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 	AI_t* gradients = create_ai(ai->layers_layout,ai->layers);
-	gradients->layers_layout = malloc(gradients->layers*sizeof(int));
+	gradients->layers_layout =(int *) malloc(gradients->layers*sizeof(int));
 	for(int i =0 ;i<ai->layers;i++){
 		gradients->layers_layout[i] = ai->layers_layout[i];
 	}
@@ -176,20 +193,59 @@ int write_ai(AI_t* ai,const char* n){
 }
 
 AI_t* read_ai(const char* n,float (*activation)(float),float (*activation_derrivative)(float)){
-	AI_t* ai = calloc(1,sizeof(AI_t));
+	AI_t* ai =(AI_t*) calloc(1,sizeof(AI_t));
 	FILE* file = fopen(n,"rb");
 	fread(&(ai->layers),sizeof(int),1,file);
-	ai->layers_layout = calloc(ai->layers,sizeof(int));
+	ai->layers_layout =(int *) calloc(ai->layers,sizeof(int));
 	fread(ai->layers_layout,sizeof(int),ai->layers,file);
 	ai->nodes = create_nodes(ai->layers_layout,ai->layers);
 	ai->d_nodes = create_nodes(ai->layers_layout,ai->layers);
 	ai->activation = activation;
 	ai->activationDerivative = activation_derrivative;
-	ai->weights = calloc(ai->layers-1,sizeof(f_Matrix_t));
+	ai->weights =(f_Matrix_t**) calloc(ai->layers-1,sizeof(f_Matrix_t));
 	for(int i =0;i<ai->layers-1;i++){
 		ai->weights[i] = f_Matrix_constructor(ai->layers_layout[i+1],ai->layers_layout[i]);
 		fread(ai->weights[i]->ptr,sizeof(float),ai->layers_layout[i+1]*ai->layers_layout[i],file);
 	}
 	fclose(file);
 	return ai;
+}
+
+Dataset_t* Dataset_constructor(int length,f_Matrix_t** inputs,f_Matrix_t** outputs){
+	Dataset_t* data =(Dataset_t*) calloc(1,sizeof(Dataset_t));
+	data->length = length;
+	data->inputs = inputs;
+	data->outputs = outputs;
+	return data;
+}
+
+int write_dataset(Dataset_t* data,const char* n){
+	FILE* file = fopen(n,"wb+");
+	fwrite(&(data->length),sizeof(int),1,file);
+	unsigned int size[4] = {data->inputs[0]->w,data->inputs[0]->h,data->outputs[0]->w,data->outputs[0]->h};
+	fwrite(size,sizeof(int),4,file);
+	for(int i=0;i<data->length;i++){
+		fwrite(data->inputs[i]->ptr,sizeof(float),data->inputs[i]->w*data->inputs[i]->h,file);
+		fwrite(data->outputs[i]->ptr,sizeof(float),data->outputs[i]->w*data->outputs[i]->h,file);
+	}
+	fclose(file);
+	return 1;
+}
+
+Dataset_t* read_dataset(const char* n){
+	FILE* file = fopen(n,"rb");
+	int length = 0;
+	fread(&(length),sizeof(int),1,file);
+	unsigned int size[4];
+	fread(size,sizeof(int),4,file);
+	f_Matrix_t** inputs =(f_Matrix_t**) calloc(length,sizeof(f_Matrix_t*));
+	f_Matrix_t** outputs =(f_Matrix_t**) calloc(length,sizeof(f_Matrix_t*));
+	for(int i=0;i<length;i++){
+		inputs[i] = f_Matrix_constructor(size[0],size[1]);
+		outputs[i] = f_Matrix_constructor(size[2],size[3]);
+		fread(inputs[i]->ptr,sizeof(float),inputs[i]->w*inputs[i]->h,file);
+		fread(outputs[i]->ptr,sizeof(float),outputs[i]->w*outputs[i]->h,file);
+	}
+	fclose(file);
+	return Dataset_constructor(length,inputs,outputs);
 }

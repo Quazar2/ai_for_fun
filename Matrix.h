@@ -3,6 +3,11 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include <conio.h>
+#else
+#include <curses.h>
+#endif
 
 typedef struct f_Matrix_3{
 float* ptr;
@@ -26,18 +31,18 @@ unsigned int l;
 
 
 f_Matrix_3_t *f_Matrix_3_constructor(int width,int height,int depth){
-	f_Matrix_3_t *Matrix = malloc(sizeof(f_Matrix_3_t));
+	f_Matrix_3_t *Matrix =(f_Matrix_3_t *) malloc(sizeof(f_Matrix_3_t));
 	Matrix->w = width;
 	Matrix->h = height;
 	Matrix->d = depth;
-	Matrix->ptr = calloc(width*height*depth,sizeof(float));
+	Matrix->ptr =(float*) calloc(width*height*depth,sizeof(float));
 	return Matrix;
 }
 f_Matrix_t *f_Matrix_constructor(int width,int height){
-	f_Matrix_t *Matrix = malloc(sizeof(f_Matrix_t));
+	f_Matrix_t *Matrix =(f_Matrix_t*) malloc(sizeof(f_Matrix_t));
 	Matrix->w = width;
 	Matrix->h = height;
-	Matrix->ptr = calloc(width*height,sizeof(float));
+	Matrix->ptr =(float *) calloc(width*height,sizeof(float));
 	return Matrix;
 }
 int f_Matrix_3_destructor(f_Matrix_3_t *Matrix){
