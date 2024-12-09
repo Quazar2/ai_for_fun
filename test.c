@@ -77,8 +77,8 @@ int main(int argc,char** argv){
 	srand(time(NULL));
 	int* layout = malloc(4*sizeof(int));
 	layout[0] = shape_size*shape_size;
-	layout[1] = 15;
-	layout[2] = 10;
+	layout[1] = 20;
+	layout[2] = 15;
 	layout[3] = 2;
 	char r;
 	char good = 0;
@@ -87,28 +87,40 @@ int main(int argc,char** argv){
 	int response = 0;
 	char* s_ai = calloc(64,sizeof(char));
 	char* s_data = calloc(64,sizeof(char));
+	int nb_data =0;
+	Dataset_t** datas;
 	while(good==0){
 		printf("\n- 1 load an ai\n- 2 load a dataset\n- 3 merge datasets\n- 4 Run and create unloaded things\n");
 		scanf("%d",&response);
 		switch(response){
 			case 1:
-				printf("1");
 				scanf("%d",&response);
 				sprintf(s_ai,"%d.ai",response);
 				ai = read_ai(s_ai,*l_Relu,*l_Relu_derivative);
 				break;
 			case 2:
-				printf("2");
 				scanf("%d",&response);
 				sprintf(s_data,"%d.data",response);
 				data = read_dataset(s_data);
 				break;
 			case 3:
-				//TODO make it possible to merge datasets
-				printf("Not Currently implemented \n");
+				printf("nb datasets : ");
+				scanf("%d",&nb_data);
+				datas =(Dataset_t**) calloc(nb_data,sizeof(Dataset_t*));
+				for(int i =0;i<nb_data;i++){
+					printf("dataset num ");
+					scanf("%d",&response);
+					sprintf(s_data,"%d.data",response);
+					datas[i] = read_dataset(s_data);
+				}
+				data = merge_datasets(nb_data,datas);
+				printf("vers : ");
+				scanf("%d",&response);
+				sprintf(s_data,"%d.data",response);
+				write_dataset(data,s_data);
+				data= NULL;
 				break;
 			case 4:
-				printf("4");
 				if(data==NULL){
 					data = create_Shapes(1000);
 				}
@@ -120,48 +132,18 @@ int main(int argc,char** argv){
 		}
 	}
 	clock_t begin = clock();
-	train_with_random_shape(ai,data,10);
-	/*
-	f_Matrix_t** inputs = malloc(4*sizeof(f_Matrix_t*));
-	f_Matrix_t** outputs = malloc(4*sizeof(f_Matrix_t*));
-	for (int i=0;i<4;i++) {
-		inputs[i] =f_Matrix_constructor(2,1);
-		outputs[i] =f_Matrix_constructor(2,1);
+	if(argc>1){
+		int times = 0;
+		sscanf(argv[1],"%d",&times);
+		train_with_random_shape(ai,data,times);
+	}else{
+		train_with_random_shape(ai,data,10);
 	}
-	f_Matrix_set(inputs[0],0,0,0);
-	f_Matrix_set(inputs[0],1,0,0);
-	f_Matrix_set(inputs[1],0,0,1);
-	f_Matrix_set(inputs[1],1,0,0);
-	f_Matrix_set(inputs[2],0,0,0);
-	f_Matrix_set(inputs[2],1,0,1);
-	f_Matrix_set(inputs[3],0,0,1);
-	f_Matrix_set(inputs[3],1,0,1);
-	f_Matrix_set(outputs[0],0,0,0);
-	f_Matrix_set(outputs[0],1,0,0);
-	f_Matrix_set(outputs[1],0,0,1);
-	f_Matrix_set(outputs[1],1,0,0);
-	f_Matrix_set(outputs[2],0,0,1);
-	f_Matrix_set(outputs[2],1,0,0);
-	f_Matrix_set(outputs[3],0,0,0);
-	f_Matrix_set(outputs[3],1,0,1);
-	double overall_Error;
-	for (int i=0;i<times;i++) {
-		overall_Error =0;
-		for (int y =0;y<4;y++) {
-			overall_Error+=compute_Error(inputs[y],ai,outputs[y]);
-			AI_Train(inputs[y],ai,outputs[y]);
-		}
-			f_Matrix_print(ai->weights[0]);
-			f_Matrix_print(ai->weights[1]);
-			printf("%.12lf\n",overall_Error/4);
-			printf("\n");
-	}
-	*/
 	double time_spent = (double)(clock() - begin) / CLOCKS_PER_SEC;
-	printf("Ran in %lf sec.",time_spent);
+	printf("Ran in %dh - %dm - %ds\n",((int)time_spent/3600)%3600,((int)time_spent/60)%60,((int)time_spent)%60);
 	good =0;
 	while(good==0){
-		printf("- 1 save an ai\n- 2 save a dataset\n- 3 merge datasets\n- 4 End\n");
+		printf("- 1 save an ai\n- 2 save a dataset\n- 3 merge datasets(can't save after that)\n- 4 End\n");
 		scanf("%d",&response);
 		switch(response){
 			case 1:
@@ -175,26 +157,43 @@ int main(int argc,char** argv){
 				write_dataset(data,s_data);
 				break;
 			case 3:
-				//TODO make it possible to merge datasets
-				printf("Not Currently implemented \n");
+				if(data!=NULL){
+					for(int i=0;i<data->length;i++){
+						f_Matrix_destructor(data->inputs[i]);
+						f_Matrix_destructor(data->outputs[i]);
+					}
+				}
+				printf("nb datasets : ");
+				scanf("%d",&nb_data);
+				datas =(Dataset_t**) calloc(nb_data,sizeof(Dataset_t*));
+				for(int i =0;i<nb_data;i++){
+					printf("dataset num ");
+					scanf("%d",&response);
+					sprintf(s_data,"%d.data",response);
+					datas[i] = read_dataset(s_data);
+				}
+				data = merge_datasets(nb_data,datas);
+				printf("vers : ");
+				scanf("%d",&response);
+				sprintf(s_data,"%d.data",response);
+				write_dataset(data,s_data);
+				data= NULL;
 				break;
 			case 4:
-				for(int i=0;i<data->length;i++){
-					f_Matrix_destructor(data->inputs[i]);
-					f_Matrix_destructor(data->outputs[i]);
+				if(data!=NULL){
+					for(int i=0;i<data->length;i++){
+						f_Matrix_destructor(data->inputs[i]);
+						f_Matrix_destructor(data->outputs[i]);
+					}
 				}
-				//free(data);
 				good=1;
 				destroy_ai(ai);
+				free(s_ai);
+				free(s_data);
+				free(data);
 				return 0;
 				break;
 		}
 	}
-	/*
-	for(int i = 0;i<4;i++){
-		f_Matrix_destructor(inputs[i]);
-		f_Matrix_destructor(outputs[i]);
-	}
-	*/
 	return 0;
 }

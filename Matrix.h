@@ -92,7 +92,7 @@ int f_Matrix_multiply(f_Matrix_t *m1,f_Matrix_t *m2,f_Matrix_t* out){
 		pthread_t threads[m1->h*m2->w];
 		f_mult_arg_t* args =(f_mult_arg_t*) malloc(m1->h*m2->w*sizeof(f_mult_arg_t));
 		float f =0;
-		f_Matrix_t **ptr =(f_Matrix_t**) malloc(sizeof(f_Matrix_t**));
+		f_Matrix_t **ptr =(f_Matrix_t**) malloc(3*sizeof(f_Matrix_t*));
 		ptr[0]=out;
 		ptr[1]=m1;
 		ptr[2]=m2;
@@ -146,7 +146,7 @@ int f_Matrix_3_multiply_scalar(f_Matrix_3_t* m,double s){
 int f_Matrix_multiply_scalar(f_Matrix_t* m,double s){
 	for(int i =0;i<m->h;i++){
 		for(int j=0;j<m->w;j++){
-			f_Matrix_set(m,i,j,f_Matrix_get(m,i,j)*s);
+			f_Matrix_set(m,i,j,f_Matrix_get(m,j,i)*s);
 		}
 	}
 	return 0;

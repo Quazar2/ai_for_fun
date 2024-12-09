@@ -249,3 +249,23 @@ Dataset_t* read_dataset(const char* n){
 	fclose(file);
 	return Dataset_constructor(length,inputs,outputs);
 }
+Dataset_t* merge_datasets(int n,Dataset_t** datasets){
+	int size = 0;
+	for(int i=0;i<n;i++){
+		size += datasets[i]->length;
+	}
+	int current_n =0;
+	int y =0;
+	f_Matrix_t** inputs = (f_Matrix_t**)calloc(size,sizeof(f_Matrix_t*));
+	f_Matrix_t** outputs = (f_Matrix_t**)calloc(size,sizeof(f_Matrix_t*));
+	for(int i=0;i<size;i++){
+		if(y>=datasets[current_n]->length){
+			y-=datasets[current_n]->length;
+			current_n+=1;
+		}
+		inputs[i] = datasets[current_n]->inputs[y];
+		outputs[i] = datasets[current_n]->outputs[y];
+		y++;
+	}
+	return Dataset_constructor(size,inputs,outputs);
+}
