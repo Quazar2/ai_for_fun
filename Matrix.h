@@ -1,11 +1,12 @@
 #pragma once
 
-#include <pthread.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef _WIN32
 #include <conio.h>
 #else
+#include <pthread.h>
 #include <curses.h>
 #endif
 
@@ -79,6 +80,7 @@ int f_Matrix_set(f_Matrix_t *Matrix,int w,int h,float value){
 	return 1;
 	}
 }
+#ifndef _WIN32
 void* f_Mult_thread(void* ar){
 	f_mult_arg_t* arg = (f_mult_arg_t*)ar;
 	f_Matrix_set(arg->ptr[0],arg->m,arg->k,0.f);
@@ -114,6 +116,22 @@ int f_Matrix_multiply(f_Matrix_t *m1,f_Matrix_t *m2,f_Matrix_t* out){
 	}
 	return 1;
 }
+#else
+//Windows unoptimized code cause they don't have pthreads
+int f_Matrix_multiply(f_Matrix_t *m1,f_Matrix_t *m2,f_Matrix_t* out){
+	if ((m1->w==m2->h)&(out->h==m1->h)&(out->w==m2->w)){
+		for (unsigned int k=0; k<m1->h;k++) {
+			for (unsigned int m=0; m<m2->w; m++) {
+				for(unsigned int i=0;i<m1->w;i++){
+					f_Matrix_set(out,m,k,f_matrix_get(m1,i,k)*f_Matrix_get(m2,m,i));
+				}
+			}
+		}
+		return 0;
+	}
+	return 1;
+}
+#endif
 int f_Matrix_3_multiply(f_Matrix_3_t *m1,f_Matrix_3_t *m2,f_Matrix_3_t* out){
 	if ((m1->w==m2->h)&(out->h==m1->h)&(out->w==m2->w)&(m1->d==m2->d)&(out->d==m1->d)){
 		float f = 0;
