@@ -67,17 +67,12 @@ int f_Matrix_3_set(f_Matrix_3_t *Matrix,int w,int h,int d,float value){
 	return 1;
 	}
 }
-float f_Matrix_get(f_Matrix_t *Matrix,int w,int h){
+static inline float f_Matrix_get(f_Matrix_t *Matrix,int w,int h){
 	return *(Matrix->ptr+w+h*Matrix->w);
 }
-int f_Matrix_set(f_Matrix_t *Matrix,int w,int h,float value){
-	if((Matrix->w>w)&(Matrix->h>h)){
+static inline int f_Matrix_set(f_Matrix_t *Matrix,int w,int h,float value){
 	*(Matrix->ptr+w+h*Matrix->w) = value;
 	return 0;
-	}
-	else{
-	return 1;
-	}
 }
 void* f_Mult_thread(void* ar){
 	f_mult_arg_t* arg = (f_mult_arg_t*)ar;

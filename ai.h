@@ -98,29 +98,6 @@ double compute_Error(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
 	return Error;
 }
 
-int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
-	AI_t* gradients = create_ai(ai->layers_layout,ai->layers);
-	gradients->layers_layout =(int *) malloc(gradients->layers*sizeof(int));
-	for(int i =0 ;i<ai->layers;i++){
-		gradients->layers_layout[i] = ai->layers_layout[i];
-	}
-	feed_forward(ai,input);
-	f_Matrix_sub(ai->nodes[ai->layers-1],expectation,gradients->nodes[gradients->layers-1]);
-	f_Matrix_multiply_scalar(gradients->nodes[gradients->layers-1],2.f/gradients->layers_layout[gradients->layers-1]);
-	for (int i = ai->layers-1;i>0;i--) {
-		for (int y =0;y<gradients->layers_layout[i];y++){
-			f_Matrix_set(gradients->nodes[i],y,0,f_Matrix_get(gradients->nodes[i],y,0)*f_Matrix_get(ai->d_nodes[i],y,0));
-			for (int z =0;z<gradients->layers_layout[i-1];z++){
-				f_Matrix_set(gradients->nodes[i-1],z,0,f_Matrix_get(gradients->nodes[i-1],z,0)+f_Matrix_get(gradients->nodes[i],y,0)*f_Matrix_get(ai->weights[i-1],y,z));
-				f_Matrix_set(ai->weights[i-1],y,z,f_Matrix_get(ai->weights[i-1],y,z)-f_Matrix_get(gradients->nodes[i],y,0)*f_Matrix_get(ai->nodes[i-1],z,0)*LEARNING_RATE);
-			}
-		}
-
-	}
-	destroy_ai(gradients);
-	return 0;
-}
-
 f_Matrix_t** create_weights(int* layers_layout,int layers){
 	f_Matrix_t** weights =(f_Matrix_t**) malloc((layers-1)*sizeof(f_Matrix_t));
 	for(int i = 0;i<layers-1;i++){
@@ -150,6 +127,29 @@ f_Matrix_t** create_nodes(int* layers_layout,int layers){
 		}
 	return nodes;
 }
+int AI_Train(f_Matrix_t* input,AI_t* ai,f_Matrix_t* expectation){
+	AI_t* gradient =(AI_t*) malloc(sizeof(AI_t));
+	gradient->layers_layout = ai->layers_layout;
+	gradient->layers = ai->layers;
+	f_Matrix_t** nodes = create_nodes(ai->layers_layout,ai->layers);
+	gradient->nodes = nodes;
+	feed_forward(ai,input);
+	f_Matrix_sub(ai->nodes[ai->layers-1],expectation,gradient->nodes[gradient->layers-1]);
+	f_Matrix_multiply_scalar(gradient->nodes[gradient->layers-1],2.f/gradient->layers_layout[gradient->layers-1]);
+	for (int i = ai->layers-1;i>0;i--) {
+		for (int y =0;y<gradient->layers_layout[i];y++){
+			f_Matrix_set(gradient->nodes[i],y,0,f_Matrix_get(gradient->nodes[i],y,0)*f_Matrix_get(ai->d_nodes[i],y,0));
+			for (int z =0;z<gradient->layers_layout[i-1];z++){
+				f_Matrix_set(gradient->nodes[i-1],z,0,f_Matrix_get(gradient->nodes[i-1],z,0)+f_Matrix_get(gradient->nodes[i],y,0)*f_Matrix_get(ai->weights[i-1],y,z));
+				f_Matrix_set(ai->weights[i-1],y,z,f_Matrix_get(ai->weights[i-1],y,z)-f_Matrix_get(gradient->nodes[i],y,0)*f_Matrix_get(ai->nodes[i-1],z,0)*LEARNING_RATE);
+			}
+		}
+
+	}
+	free(gradient);
+	return 0;
+}
+
 AI_t* create_ai(int* layers_layout,int layers){
 	AI_t* ai =(AI_t*) malloc(sizeof(AI_t));
 	(*ai).layers_layout = layers_layout;
